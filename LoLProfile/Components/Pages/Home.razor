@@ -1,0 +1,34 @@
+﻿@page "/"
+@inject IRiotClient RiotClient
+
+<PageTitle>LoLProfile</PageTitle>
+
+<InputText @bind-Value="GameName"></InputText>
+<InputText @bind-Value="TagLine"></InputText>
+<button @onclick="GetSummonerProfile">submit</button>
+
+
+@if (summonerInfo is not null)
+{
+    <div>
+        <p> @summonerInfo.summonerLevel </p>
+        <img src="https://cdn.communitydragon.org/latest/profile-icon/@(summonerInfo.profileIconId)" />
+    </div>
+}
+
+@code {
+
+    string GameName;
+    string TagLine;
+
+    SummonerInfo? summonerInfo;
+
+
+    private async void GetSummonerProfile()
+    {
+        PuuidResponse puuidResponse = await RiotClient.GetPuuID(GameName, TagLine);
+        summonerInfo = await RiotClient.GetPlayerInfo(puuidResponse.puuid);
+    }
+
+}
+
