@@ -2,6 +2,7 @@
 using LoLProfile.Models;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace LoLProfile.Clients;
 
@@ -15,7 +16,7 @@ public class RiotClient(IOptions<RiotApiSettings> riotApiSettings) : IRiotClient
         {
             return response;
         }
-        throw new Exception("response was null when grabbing PUUID");
+        throw new Exception("matchIds was null when grabbing PUUID");
     }
 
     public async Task<SummonerInfo> GetPlayerInfo(string puuiID)
@@ -26,8 +27,30 @@ public class RiotClient(IOptions<RiotApiSettings> riotApiSettings) : IRiotClient
         {
             return response;
         }
-        throw new Exception("response was null when Summoner Info");
+        throw new Exception("matchIds was null when Summoner Info");
+    }
+    public async Task<List<string>> GetMatchHistory(string puuiID)
+    {
+        var httpClient = new HttpClient();
+        List<string>? matchIds = await httpClient.GetFromJsonAsync<List<string>>($"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuiID}/ids?start=0&count=20&api_key={riotApiSettings.Value.ApiKey}");
+        if (matchIds is not null)
+        {
+            return matchIds;
+        }
+        else
+            throw new Exception("matchIds was null when trying to grab recent match history");
     }
 
+    public async Task<MatchData> GetMatchData(string matchId)
+    {
+        var httpClient = new HttpClient();
+        MatchData? match = await httpClient.GetFromJsonAsync<MatchData>($"https://americas.api.riotgames.com/lol/match/v5/matches/{matchId}?api_key={riotApiSettings.Value.ApiKey}");
+        if (match is not null)
+        {
+            return match;
+        }
+        throw new Exception("failed to grab match");
+    }
 }
+
 

@@ -3,17 +3,61 @@
 
 <PageTitle>LoLProfile</PageTitle>
 
-<InputText @bind-Value="GameName"></InputText>
-<InputText @bind-Value="TagLine"></InputText>
-<button @onclick="GetSummonerProfile">submit</button>
 
+<MudTextField T="string" @bind-Value="GameName" Variant="Variant.Outlined"></MudTextField>
+<MudTextField T="string" @bind-Value="TagLine" Variant="Variant.Outlined"></MudTextField>
+<MudButton OnClick="GetSummonerProfile" Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" StartIcon="@Icons.Material.Filled.Android">Submit</MudButton>
 
+<h1>LoLProfile</h1>
 @if (summonerInfo is not null)
 {
     <div>
-        <p> @summonerInfo.summonerLevel </p>
-        <img src="https://cdn.communitydragon.org/latest/profile-icon/@(summonerInfo.profileIconId)" />
+        <p><b>Summoner level</b>: @summonerInfo.summonerLevel </p>
+        <img height="90px" width="90px" src="https://cdn.communitydragon.org/latest/profile-icon/@(summonerInfo.profileIconId)" />
     </div>
+}
+
+@foreach (MatchData match in matches)
+{
+    var participants = match.info.participants;
+    var teamSize = participants.Length / 2;
+    Console.WriteLine(string.Join(' ', participants.Select(x => x.riotIdGameName)));
+    <MudPaper class="m-2 d-flex flex-column pa-3" style="width:800px;">
+        @for (var i = 0; i < teamSize -1; i++)
+        {
+            var index = i;
+            Console.WriteLine(index);
+            <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center">
+                <div>
+                    <img height="30px" width="30px" src="@($"https://cdn.communitydragon.org/latest/profile-icon/{participants[index].profileIcon}")" />
+                    <span>
+                        @participants[index].riotIdGameName
+                    </span>
+                    <span>
+                        @participants[index].championName
+                    </span>
+                    <span>
+                        @participants[index].challenges.kda
+                    </span>
+                </div>
+
+                <div>
+                    <img height="30px" width="30px" src="@($"https://cdn.communitydragon.org/latest/profile-icon/{participants[index+teamSize].profileIcon}")" />
+                    <span>
+                        @participants[index + teamSize].riotIdGameName
+                    </span>
+                    <span>
+                        @participants[index + teamSize].championName
+                    </span>
+                    <span>
+                        @participants[index + teamSize].challenges.kda
+                    </span>
+                </div>
+            </MudStack>
+        }
+
+
+    </MudPaper>
 }
 
 @code {
@@ -22,13 +66,25 @@
     string TagLine;
 
     SummonerInfo? summonerInfo;
+    List<MatchData> matches = [];
 
-
-    private async void GetSummonerProfile()
+    private async Task GetSummonerProfile()
     {
         PuuidResponse puuidResponse = await RiotClient.GetPuuID(GameName, TagLine);
         summonerInfo = await RiotClient.GetPlayerInfo(puuidResponse.puuid);
+        await GetMatches(puuidResponse.puuid);
     }
+
+    private async Task GetMatches(string puuid)
+    {
+        List<string> matchIds = await RiotClient.GetMatchHistory(puuid);
+
+        foreach (string id in matchIds)
+        {
+            matches.Add(await RiotClient.GetMatchData(id));
+        }
+    }
+
 
 }
 

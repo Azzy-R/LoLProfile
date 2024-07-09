@@ -3,13 +3,15 @@ using LoLProfile.Components;
 using LoLProfile.Interfaces;
 using LoLProfile.Models;
 using Microsoft.Extensions.DependencyInjection;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
+builder.Services.AddMudServices();
+builder.Services.AddMudPopoverService();
 var apikey = builder.Configuration.GetSection("RiotApiSettings");
 builder.Services.Configure<RiotApiSettings>(apikey);
 builder.Services.AddScoped<IRiotClient, RiotClient> ();
